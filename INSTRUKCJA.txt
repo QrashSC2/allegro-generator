@@ -1,0 +1,64 @@
+INSTRUKCJA DLA WŁAŚCICIELA — JEDNORAZOWA KONFIGURACJA
+======================================================
+
+Po wykonaniu tych kroków wszyscy pracownicy wchodzą na link
+i używają aplikacji — bez logowania, bez instalacji, bez konfiguracji.
+
+
+KROK 1 — Pobierz darmowy klucz AI od Google
+---------------------------------------------
+1. Wejdź na: https://aistudio.google.com/apikey
+2. Zaloguj się swoim kontem Google
+3. Kliknij "Create API key"
+4. Skopiuj i zapisz klucz (zaczyna się od "AIzaSy...")
+
+
+KROK 2 — Załóż darmowe konto GitHub
+--------------------------------------
+1. Wejdź na: https://github.com
+2. Kliknij "Sign up" i zarejestruj się
+
+
+KROK 3 — Wgraj pliki na GitHub
+--------------------------------
+1. Po zalogowaniu na GitHub kliknij "+" > "New repository"
+2. Nazwa: allegro-generator
+3. Kliknij "Create repository"
+4. Kliknij "uploading an existing file"
+5. Przeciągnij "index.html" i "vercel.json" — kliknij "Commit changes"
+6. Kliknij "Add file" > "Upload files"
+   W polu nad przyciskiem wpisz: api/chat.js
+   Przeciągnij plik "chat.js" z folderu "api"
+   Kliknij "Commit changes"
+
+
+KROK 4 — Wdróż na Vercel (darmowy hosting)
+---------------------------------------------
+1. Wejdź na: https://vercel.com
+2. Kliknij "Sign Up" > "Continue with GitHub"
+3. Kliknij "Add New Project" > znajdź "allegro-generator" > "Import"
+4. Kliknij "Deploy" i poczekaj ~1 minutę
+
+
+KROK 5 — Dodaj klucz AI do aplikacji
+---------------------------------------
+1. W Vercel wejdź w projekt "allegro-generator"
+2. Kliknij "Settings" > "Environment Variables"
+3. NAME: GEMINI_API_KEY
+   VALUE: wklej klucz z Kroku 1
+4. Kliknij "Save"
+5. Kliknij "Deployments" > trzy kropki (...) > "Redeploy" > potwierdź
+
+
+GOTOWE — wyślij pracownikom ten link:
+https://allegro-generator-xyz.vercel.app
+(dokładny adres zobaczysz w Vercel po wdrożeniu)
+
+
+CO WIDZĄ PRACOWNICY
+--------------------
+- Otwierają link w przeglądarce (telefon lub komputer)
+- Przy pierwszym uruchomieniu wyskakuje okienko z prośbą o inicjały
+- Wpisują inicjały raz — aplikacja je zapamiętuje
+- Od tej chwili po prostu używają generatora
+
