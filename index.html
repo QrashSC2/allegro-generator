@@ -431,14 +431,17 @@ async function generateDesc() {
   btn.disabled=true; btn.textContent='…';
   try {
     var text = await callAI(
-      'Jesteś ekspertem od części samochodowych OEM. ' +
-      'Napisz krótki opis przedmiotu aukcji (2-3 zdania) do ogłoszenia na Allegro. ' +
-      'Opis ma być rzeczowy, po polsku, bez zbędnych ozdobników. ' +
-      'NIE wspominaj o oryginalności — to jest osobna sekcja. ' +
-      'NIE używaj cudzysłowów ani markdown. ' +
-      (brand ? 'Marka pojazdu: '+brand+'. ' : '') +
-      (oeNums.length ? 'Numery OEM: '+oeNums.join(', ')+'. ' : ''),
-      300
+      'Jesteś ekspertem od oryginalnych części samochodowych OEM sprzedawanych na Allegro. ' +
+      'Na podstawie numeru OEM napisz opis przedmiotu aukcji po polsku (3-5 zdań). ' +
+      'Opis MUSI zawierać: ' +
+      '1) Pełna nazwa części i do czego służy (gdzie w samochodzie jest montowana). ' +
+      '2) Jeśli część wymaga kodowania/programowania po montażu — napisz dokładnie to zdanie: "Część kodowana - przed wysyłką skontaktujemy się telefonicznie". Jeśli nie wymaga — pomiń. ' +
+      'NIE pisz o oryginalności — to jest osobna sekcja ogłoszenia. ' +
+      'NIE używaj cudzysłowów, gwiazdek, myślników na początku zdań ani żadnego markdown. ' +
+      'Pisz płynnym, rzeczowym językiem. Tylko tekst, zero nagłówków. ' +
+      (brand ? 'Marka pojazdu: ' + brand + '. ' : '') +
+      (oeNums.length ? 'Numery OEM: ' + oeNums.join(', ') + '. ' : ''),
+      500
     );
     text = text.trim().replace(/^["']|["']$/g,'');
     document.getElementById('f-desc').value = text;
@@ -475,10 +478,21 @@ async function suggestTitle() {
   btnLoad('title-ai-btn','Generuję tytuł…');
   try {
     var title = await callAI(
-      'Wygeneruj JEDEN tytuł aukcji Allegro dla części samochodowej OEM. ' +
-      'Struktura: [MARKA] [KOD NADWOZIA MODEL] [NAZWA CZĘŚCI WIELKIMI LITERAMI] OEM [NUMER] ORYGINAŁ. ' +
-      'Tylko wielkie litery, max 75 znaków, zero komentarzy. Sam tytuł. ' +
-      (brand?'Marka: '+brand+'. ':'')+(oeNums.length?'Numery OEM: '+oeNums.join(', ')+'.':''), 200
+      'Jesteś ekspertem od sprzedaży oryginalnych części samochodowych OEM na Allegro. ' +
+      'Wygeneruj JEDEN tytuł aukcji Allegro dla tej części. ' +
+      'Zasady budowy tytułu (kolejność obowiązkowa): ' +
+      '1) Marka pojazdu (np. BMW) ' +
+      '2) Kody nadwozia i nazwy modeli do których pasuje część (np. F30 F31 320i 325i) — wymień wszystkie które znasz ' +
+      '3) Pełna polska nazwa części wielkimi literami (np. MODUŁ KOMFORTU STEROWNIK BCM) ' +
+      '4) OEM ' +
+      '5) Numer OEM ' +
+      '6) ORYGINAŁ ' +
+      'Używaj WYŁĄCZNIE wielkich liter. ' +
+      'Maksymalnie 75 znaków — jeśli nie mieszczą się wszystkie modele skróć je. ' +
+      'Zwróć TYLKO sam tytuł — zero komentarzy, zero cudzysłowów, zero kropek na końcu. ' +
+      (brand ? 'Marka: ' + brand + '. ' : '') +
+      (oeNums.length ? 'Numery OEM: ' + oeNums.join(', ') + '.' : ''),
+      300
     );
     title = title.replace(/^["']|["']$/g,'').trim();
     if (title) { document.getElementById('title-suggestion').textContent=title; document.getElementById('title-suggestion-wrap').style.display='block'; setHint('title-ai-hint','Kliknij tytuł aby przenieść do pola edycji.','ok'); }
