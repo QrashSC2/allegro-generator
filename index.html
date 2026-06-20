@@ -459,14 +459,27 @@ async function lookupCompat() {
   try {
     var raw = await callAI(
       'Jesteś ekspertem od katalogów części samochodowych OEM. ' +
-      'Zwróć TYLKO tablicę JSON modeli do których pasuje ta część. ' +
-      'Format: ["BMW X3 (G01) 2017-2021"]. Zero tekstu poza tablicą JSON. ' +
-      (brand?'Marka: '+brand+'. ':'')+'Numery OEM: '+oeNums.join(', ')+'.'
+      'Na podstawie numeru OEM zwróć listę modeli pojazdów do których pasuje ta część. ' +
+      'ODPOWIEDZ WYŁĄCZNIE tablicą JSON i niczym więcej. ' +
+      'Żadnego tekstu przed ani po tablicy. Żadnych komentarzy. Żadnego markdown. ' +
+      'Format dokładnie taki: ["BMW X3 (G01) 2017-2021","BMW X4 (G02) 2018-2021"] ' +
+      'Jeśli nie znasz numeru zwróć: [] ' +
+      (brand ? 'Marka: ' + brand + '. ' : '') +
+      'Numer OEM: ' + oeNums[0] + '.'
     );
-    raw = raw.replace(/```json|```/g,'').trim();
-    var models = JSON.parse(raw);
-    if (!Array.isArray(models)||!models.length) { setHint('ai-hint','Nie rozpoznano numerów OEM. Dodaj modele ręcznie.','warn'); }
-    else { models.forEach(function(m){ if(m&&compatList.indexOf(m)===-1) compatList.push(m); }); renderTags(); generate(); setHint('ai-hint','Znaleziono '+models.length+' modeli.','ok'); }
+
+    // wyciągnij tablicę JSON nawet jeśli AI doda coś wokół
+    var match = raw.match(/\[[\s\S]*\]/);
+    if (!match) { setHint('ai-hint','Nie rozpoznano numerów OEM. Dodaj modele ręcznie.','warn'); btnReset('ai-btn','Sprawdź kompatybilność z AI'); return; }
+
+    var models = JSON.parse(match[0]);
+    if (!Array.isArray(models) || !models.length) {
+      setHint('ai-hint','Nie rozpoznano numerów OEM. Dodaj modele ręcznie.','warn');
+    } else {
+      models.forEach(function(m){ if(m && compatList.indexOf(m)===-1) compatList.push(m); });
+      renderTags(); generate();
+      setHint('ai-hint','Znaleziono ' + models.length + ' modeli.','ok');
+    }
   } catch(e) { setHint('ai-hint','Błąd: '+e.message,'warn'); }
   btnReset('ai-btn','Sprawdź kompatybilność z AI');
 }
