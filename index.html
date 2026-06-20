@@ -459,13 +459,13 @@ async function lookupCompat() {
   try {
     var raw = await callAI(
       'Jesteś ekspertem od katalogów części samochodowych OEM. ' +
-      'Na podstawie numeru OEM zwróć listę modeli pojazdów do których pasuje ta część. ' +
-      'ODPOWIEDZ WYŁĄCZNIE tablicą JSON i niczym więcej. ' +
-      'Żadnego tekstu przed ani po tablicy. Żadnych komentarzy. Żadnego markdown. ' +
-      'Format dokładnie taki: ["BMW X3 (G01) 2017-2021","BMW X4 (G02) 2018-2021"] ' +
-      'Jeśli nie znasz numeru zwróć: [] ' +
-      (brand ? 'Marka: ' + brand + '. ' : '') +
-      'Numer OEM: ' + oeNums[0] + '.'
+      'Podaj listę modeli samochodów do których pasuje część o numerze OEM: ' + oeNums.join(', ') + '. ' +
+      (brand ? 'Marka pojazdu: ' + brand + '. ' : '') +
+      'Odpowiedz TYLKO tablicą JSON, np: ["BMW F30 320i 2012-2019","BMW F31 318d 2013-2018"] ' +
+      'Uwzględnij kod nadwozia, nazwę modelu i lata produkcji. ' +
+      'Jeśli znasz część — wypisz wszystkie pasujące modele. ' +
+      'Jeśli nie znasz numeru — zwróć []. ' +
+      'TYLKO tablica JSON, nic więcej.'
     );
 
     // wyciągnij tablicę JSON nawet jeśli AI doda coś wokół
