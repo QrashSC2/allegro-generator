@@ -495,22 +495,22 @@ async function suggestTitle() {
   try {
     var title = await callAI(
       'Jesteś ekspertem od sprzedaży oryginalnych części samochodowych OEM na Allegro. ' +
-      'Wygeneruj JEDEN tytuł aukcji Allegro dla tej części. ' +
-      'Zasady budowy tytułu (kolejność obowiązkowa): ' +
-      '1) Marka pojazdu (np. BMW) ' +
-      '2) Kody nadwozia i nazwy modeli do których pasuje część (np. F30 F31 320i 325i) — wymień wszystkie które znasz ' +
-      '3) Pełna polska nazwa części wielkimi literami (np. MODUŁ KOMFORTU STEROWNIK BCM) ' +
-      '4) OEM ' +
-      '5) Numer OEM ' +
-      '6) ORYGINAŁ ' +
-      'Używaj WYŁĄCZNIE wielkich liter. ' +
-      'Maksymalnie 75 znaków — jeśli nie mieszczą się wszystkie modele skróć je. ' +
-      'Zwróć TYLKO sam tytuł — zero komentarzy, zero cudzysłowów, zero kropek na końcu. ' +
+      'Wygeneruj JEDEN tytuł aukcji Allegro. Limit: dokładnie 75 znaków — nie więcej. ' +
+      'Kolejność elementów: ' +
+      '1. Marka (np. BMW) ' +
+      '2. Maksymalnie 2 kody nadwozia (np. G01 G02) ' +
+      '3. Pełna nazwa części WIELKIMI LITERAMI (np. AIRBAG PODUSZKA KIEROWCY SKÓRA) ' +
+      '4. OEM ' +
+      '5. Numer OEM ' +
+      '6. ORYGINAŁ ' +
+      'Jeśli nie mieszczą się wszystkie elementy — skróć kody nadwozia, NIE skracaj nazwy części ani numeru OEM. ' +
+      'TYLKO wielkie litery. Zero komentarzy. Zero cudzysłowów. Tylko sam tytuł. ' +
       (brand ? 'Marka: ' + brand + '. ' : '') +
       (oeNums.length ? 'Numery OEM: ' + oeNums.join(', ') + '.' : ''),
-      300
+      150
     );
     title = title.replace(/^["']|["']$/g,'').trim();
+    if (title.length > 75) title = title.substring(0, 75).trim();
     if (title) { document.getElementById('title-suggestion').textContent=title; document.getElementById('title-suggestion-wrap').style.display='block'; setHint('title-ai-hint','Kliknij tytuł aby przenieść do pola edycji.','ok'); }
   } catch(e) { setHint('title-ai-hint','Błąd: '+e.message,'warn'); }
   btnReset('title-ai-btn','Sugeruj tytuł z AI');
