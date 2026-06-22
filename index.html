@@ -91,14 +91,6 @@
   .field textarea { min-height: 68px; line-height: 1.55; }
   .hint { font-size: 11px; color: var(--text3); margin-top: 4px; }
 
-  /* ── PRICE SECTION ── */
-  .price-row { display: flex; gap: 8px; align-items: flex-end; }
-  .price-row .field { flex: 1; }
-  .price-result { background: var(--green-bg); border: 1px solid #b5ddb9; border-radius: var(--radius-sm); padding: 10px 14px; }
-  .price-result .price-label { font-size: 11px; font-weight: 600; color: var(--green); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
-  .price-result .price-value { font-size: 22px; font-weight: 700; color: var(--green); }
-  .price-result .price-note { font-size: 11px; color: var(--text3); margin-top: 2px; }
-
   /* ── OEM ROWS ── */
   .oe-list { display: flex; flex-direction: column; gap: 7px; }
   .oe-row { display: flex; gap: 6px; align-items: center; }
@@ -304,23 +296,6 @@
       </div>
     </div>
 
-    <!-- CENA -->
-    <div class="card">
-      <div class="card-head"><span class="dot"></span><h2>Propozycja ceny</h2></div>
-      <div class="card-body">
-        <div class="field">
-          <label>Najniższa cena u konkurencji na Allegro (zł)</label>
-          <input id="f-market-price" type="number" min="0" step="1" placeholder="np. 350" oninput="calcPrice()">
-          <p class="hint">Wpisz najniższą cenę jaką widzisz u innych sprzedawców</p>
-        </div>
-        <div id="price-result" style="display:none;" class="price-result">
-          <div class="price-label" id="price-label">Sugerowana cena</div>
-          <div class="price-value" id="price-value">—</div>
-          <div class="price-note" id="price-note"></div>
-        </div>
-      </div>
-    </div>
-
     <!-- DODATKOWE UWAGI -->
     <div class="card">
       <div class="card-head"><span class="dot"></span><h2>Dodatkowe uwagi</h2></div>
@@ -431,17 +406,15 @@ async function generateDesc() {
   btn.disabled=true; btn.textContent='…';
   try {
     var text = await callAI(
-      'Jesteś ekspertem od oryginalnych części samochodowych OEM sprzedawanych na Allegro. ' +
-      'Na podstawie numeru OEM napisz opis przedmiotu aukcji po polsku (3-5 zdań). ' +
-      'Opis MUSI zawierać: ' +
-      '1) Pełna nazwa części i do czego służy (gdzie w samochodzie jest montowana). ' +
-      '2) Jeśli część wymaga kodowania/programowania po montażu — napisz dokładnie to zdanie: "Część kodowana - przed wysyłką skontaktujemy się telefonicznie". Jeśli nie wymaga — pomiń. ' +
-      'NIE pisz o oryginalności — to jest osobna sekcja ogłoszenia. ' +
-      'NIE używaj cudzysłowów, gwiazdek, myślników na początku zdań ani żadnego markdown. ' +
-      'Pisz płynnym, rzeczowym językiem. Tylko tekst, zero nagłówków. ' +
-      (brand ? 'Marka pojazdu: ' + brand + '. ' : '') +
-      (oeNums.length ? 'Numery OEM: ' + oeNums.join(', ') + '. ' : ''),
-      500
+      'Jesteś ekspertem od oryginalnych części samochodowych OEM. ' +
+      'Napisz krótki opis przedmiotu aukcji (2-3 zdania, max 400 znaków) po polsku. ' +
+      'Opis jest kontynuacją tytułu aukcji — nie powtarzaj marki ani numeru. ' +
+      'Zawrzyj: czym jest część, co kontroluje (elektronika) lub gdzie jest montowana i do czego służy (mechanika/karoseria). ' +
+      'Jeśli część wymaga kodowania po montażu — dodaj na końcu: "Część kodowana - przed wysyłką skontaktujemy się telefonicznie." ' +
+      'Pisz rzeczowo, bez ozdób, bez markdown, bez cudzysłowów. Tylko ciągły tekst. ' +
+      (brand ? 'Marka: ' + brand + '. ' : '') +
+      (oeNums.length ? 'Numer OEM: ' + oeNums.join(', ') + '. ' : ''),
+      400
     );
     text = text.trim().replace(/^["']|["']$/g,'');
     document.getElementById('f-desc').value = text;
@@ -458,30 +431,35 @@ async function lookupCompat() {
   btnLoad('ai-btn','Szukam modeli…');
   try {
     var raw = await callAI(
-      'Jesteś ekspertem od katalogów części samochodowych OEM. ' +
-      'Do jakich modeli samochodów pasuje część o numerze OEM: ' + oeNums.join(', ') + '? ' +
+      'Jesteś ekspertem od katalogów części OEM (ETK BMW, ETKA VAG, WIS Mercedes, Porsche PIWIS). ' +
+      'Zadanie: znajdź kompatybilne modele dla numeru OEM: ' + oeNums.join(', ') + '. ' +
       (brand ? 'Marka: ' + brand + '. ' : '') +
-      'Podaj listę modeli — każdy model w osobnej linii, zaczynając od myślnika. ' +
-      'Przykład:\n- BMW F30 320i 2012-2019\n- BMW F31 318d 2013-2018\n' +
-      'Podaj tylko listę, bez żadnego wstępu ani zakończenia.'
+      'Algorytm: ' +
+      '1. Zdekoduj numer — dla BMW uzupełnij do pełnego 11-cyfrowego numeru OE jeśli potrzeba. ' +
+      '2. Zidentyfikuj dokładnie czym jest część (nazwa techniczna + cechy szczególne np. M-Pakiet, skóra). ' +
+      '3. Podaj WSZYSTKIE kody nadwozia w których ta część była montowana fabrycznie. ' +
+      '4. Jeśli numer wygląda jak numer wewnętrzny poddostawcy — napisz o tym. ' +
+      'Format odpowiedzi — każdy model w osobnej linii z myślnikiem: ' +
+      '- [KOD NADWOZIA] [NAZWA MODELU] [NADWOZIE] [LATA] np.: ' +
+      '- G01 BMW X3 xDrive20d Sedan 2017-2024 ' +
+      '- G02 BMW X4 M40i Coupe 2018-2024 ' +
+      'Tylko lista modeli. Zero wstępu i zakończenia.'
     );
 
-    // parsuj linie zaczynające się od myślnika lub gwiazdki lub cyfry
     var lines = raw.split('\n');
     var models = [];
     lines.forEach(function(line) {
       line = line.trim();
-      // usuń myślnik, gwiazdkę, cyfrę z kropką na początku
       line = line.replace(/^[-*•]\s*/, '').replace(/^\d+\.\s*/, '').trim();
       if (line.length > 3) models.push(line);
     });
 
     if (!models.length) {
-      setHint('ai-hint','Nie rozpoznano numerów OEM. Dodaj modele ręcznie.','warn');
+      setHint('ai-hint','Nie rozpoznano numeru OEM. Dodaj modele ręcznie.','warn');
     } else {
       models.forEach(function(m){ if(m && compatList.indexOf(m)===-1) compatList.push(m); });
       renderTags(); generate();
-      setHint('ai-hint','Znaleziono ' + models.length + ' modeli.','ok');
+      setHint('ai-hint','Znaleziono ' + models.length + ' modeli — sprawdź poprawność.','ok');
     }
   } catch(e) { setHint('ai-hint','Błąd: '+e.message,'warn'); }
   btnReset('ai-btn','Sprawdź kompatybilność z AI');
@@ -493,25 +471,31 @@ async function suggestTitle() {
   if (!brand&&!oeNums.length) { setHint('title-ai-hint','Wybierz markę i wpisz numer OEM.','warn'); return; }
   btnLoad('title-ai-btn','Generuję tytuł…');
   try {
-    var title = await callAI(
+    var raw = await callAI(
       'Jesteś ekspertem od sprzedaży oryginalnych części samochodowych OEM na Allegro. ' +
-      'Wygeneruj JEDEN tytuł aukcji Allegro. Limit: dokładnie 75 znaków — nie więcej. ' +
-      'Kolejność elementów: ' +
-      '1. Marka (np. BMW) ' +
-      '2. Maksymalnie 2 kody nadwozia (np. G01 G02) ' +
-      '3. Pełna nazwa części WIELKIMI LITERAMI (np. AIRBAG PODUSZKA KIEROWCY SKÓRA) ' +
-      '4. OEM ' +
-      '5. Numer OEM ' +
-      '6. ORYGINAŁ ' +
-      'Jeśli nie mieszczą się wszystkie elementy — skróć kody nadwozia, NIE skracaj nazwy części ani numeru OEM. ' +
-      'TYLKO wielkie litery. Zero komentarzy. Zero cudzysłowów. Tylko sam tytuł. ' +
+      'Wygeneruj 3 propozycje tytułu aukcji Allegro dla tej części. ' +
+      'Każdy tytuł w osobnej linii, zaczynając od cyfry i kropki. ' +
+      'Budowa każdego tytułu (kolejność obowiązkowa, TYLKO wielkie litery): ' +
+      '[MARKA] [2-3 KODY NADWOZIA] [PEŁNA NAZWA CZĘŚCI PO POLSKU] OEM [NUMER OEM] ORYGINAŁ ' +
+      'Przykład: BMW G01 G02 AIRBAG PODUSZKA KIEROWCY SKÓRA OEM 32699887806 ORYGINAŁ ' +
+      'Każdy tytuł maksymalnie 75 znaków. Jeśli za długi — skróć kody nadwozia. ' +
+      'Tylko tytuły, zero komentarzy. ' +
       (brand ? 'Marka: ' + brand + '. ' : '') +
-      (oeNums.length ? 'Numery OEM: ' + oeNums.join(', ') + '.' : ''),
-      150
+      (oeNums.length ? 'Numer OEM: ' + oeNums.join(', ') + '.' : ''),
+      300
     );
+
+    // weź pierwszą linię która wygląda jak tytuł
+    var lines = raw.split('\n').map(function(l){ return l.replace(/^\d+\.\s*/,'').replace(/^[-*]\s*/,'').trim(); }).filter(function(l){ return l.length > 10; });
+    var title = lines[0] || '';
     title = title.replace(/^["']|["']$/g,'').trim();
     if (title.length > 75) title = title.substring(0, 75).trim();
-    if (title) { document.getElementById('title-suggestion').textContent=title; document.getElementById('title-suggestion-wrap').style.display='block'; setHint('title-ai-hint','Kliknij tytuł aby przenieść do pola edycji.','ok'); }
+
+    if (title) {
+      document.getElementById('title-suggestion').textContent = title;
+      document.getElementById('title-suggestion-wrap').style.display = 'block';
+      setHint('title-ai-hint','Kliknij tytuł aby przenieść do pola edycji.','ok');
+    }
   } catch(e) { setHint('title-ai-hint','Błąd: '+e.message,'warn'); }
   btnReset('title-ai-btn','Sugeruj tytuł z AI');
 }
@@ -520,39 +504,6 @@ function useTitle() {
   var t=document.getElementById('title-suggestion').textContent; if(!t) return;
   document.getElementById('f-title').value=t; generate();
   setHint('title-ai-hint','Tytuł przeniesiony.','ok');
-}
-
-/* ══════════════════════════════════════
-   CENA
-══════════════════════════════════════ */
-function calcPrice() {
-  var market = parseFloat(document.getElementById('f-market-price').value);
-  var visual  = v('f-visual');
-  var tech    = v('f-techstate');
-  var result  = document.getElementById('price-result');
-
-  if (!market || market <= 0) { result.style.display='none'; generate(); return; }
-
-  var topVisual = visual === 'Celujący - Jak nowy!';
-  var topTech   = tech   === 'Celujący - część używana w pełni sprawna';
-  var premium   = topVisual && topTech;
-
-  var price, note, label;
-  if (premium) {
-    price = Math.round(market * 1.10);
-    note  = 'Stan celujący → cena rynkowa + 10%';
-    label = 'Sugerowana cena (stan idealny)';
-  } else {
-    price = Math.round(market - 5);
-    note  = 'Cena konkurencyjna → najniższa cena rynkowa − 5 zł';
-    label = 'Sugerowana cena (cena konkurencyjna)';
-  }
-
-  document.getElementById('price-label').textContent = label;
-  document.getElementById('price-value').textContent = price + ' zł';
-  document.getElementById('price-note').textContent  = note;
-  result.style.display = 'block';
-  generate();
 }
 
 /* ══════════════════════════════════════
@@ -587,8 +538,8 @@ document.addEventListener('DOMContentLoaded',function(){document.getElementById(
 /* ══════════════════════════════════════
    DROPDOWNS
 ══════════════════════════════════════ */
-function onVisualChange(){document.getElementById('f-visual-custom').style.display=v('f-visual')==='custom'?'block':'none';calcPrice();generate();}
-function onTechChange(){var sel=v('f-techstate');var show=sel==='defekty'||sel==='Dobry - część używana z defektami nie wpływającymi na użytkowanie';document.getElementById('f-techstate-custom').style.display=show?'block':'none';calcPrice();generate();}
+function onVisualChange(){document.getElementById('f-visual-custom').style.display=v('f-visual')==='custom'?'block':'none';generate();}
+function onTechChange(){var sel=v('f-techstate');var show=sel==='defekty'||sel==='Dobry - część używana z defektami nie wpływającymi na użytkowanie';document.getElementById('f-techstate-custom').style.display=show?'block':'none';generate();}
 
 /* ══════════════════════════════════════
    GENERATE
