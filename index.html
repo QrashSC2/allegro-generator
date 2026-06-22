@@ -406,15 +406,16 @@ async function generateDesc() {
   btn.disabled=true; btn.textContent='…';
   try {
     var text = await callAI(
-      'Jesteś ekspertem od oryginalnych części samochodowych OEM. ' +
-      'Napisz krótki opis przedmiotu aukcji (2-3 zdania, max 400 znaków) po polsku. ' +
-      'Opis jest kontynuacją tytułu aukcji — nie powtarzaj marki ani numeru. ' +
-      'Zawrzyj: czym jest część, co kontroluje (elektronika) lub gdzie jest montowana i do czego służy (mechanika/karoseria). ' +
-      'Jeśli część wymaga kodowania po montażu — dodaj na końcu: "Część kodowana - przed wysyłką skontaktujemy się telefonicznie." ' +
-      'Pisz rzeczowo, bez ozdób, bez markdown, bez cudzysłowów. Tylko ciągły tekst. ' +
+      'Jesteś ekspertem od części samochodowych OEM z wiedzą z katalogów ETK (BMW), ETKA (VAG), WIS (Mercedes). ' +
+      'WAŻNE: Dla BMW krótkie numery (6-7 cyfr) rozwiń do pełnego numeru OE (np. 8091171 to wahacz 33306867272 do BMW X5 E70/X6 E71). ' +
+      'Napisz opis przedmiotu aukcji po polsku (2-3 zdania, max 450 znaków). ' +
+      'Opis jest kontynuacją tytułu — zacznij od pełnej nazwy technicznej części. ' +
+      'Zawrzyj: co to jest, gdzie w aucie jest zamontowane, do czego służy lub co kontroluje. ' +
+      'Jeśli część wymaga kodowania po montażu (sterowniki, moduły, airbag, BSI, ECU) dodaj: "Część kodowana - przed wysyłką skontaktujemy się telefonicznie." ' +
+      'Pisz technicznie i zwięźle. Bez markdown, bez cudzysłowów, bez wstępów w stylu "Oferujemy". ' +
       (brand ? 'Marka: ' + brand + '. ' : '') +
       (oeNums.length ? 'Numer OEM: ' + oeNums.join(', ') + '. ' : ''),
-      400
+      500
     );
     text = text.trim().replace(/^["']|["']$/g,'');
     document.getElementById('f-desc').value = text;
@@ -431,19 +432,17 @@ async function lookupCompat() {
   btnLoad('ai-btn','Szukam modeli…');
   try {
     var raw = await callAI(
-      'Jesteś ekspertem od katalogów części OEM (ETK BMW, ETKA VAG, WIS Mercedes, Porsche PIWIS). ' +
-      'Zadanie: znajdź kompatybilne modele dla numeru OEM: ' + oeNums.join(', ') + '. ' +
+      'Jesteś ekspertem od katalogów OEM: ETK BMW, ETKA VAG, WIS Mercedes. ' +
+      'WAŻNE dla BMW: krótki numer (6-7 cyfr) rozwiń do pełnego numeru OE przed wyszukiwaniem. ' +
+      'Przykład: 8091171 to skrócony numer — pełny OE to 33306867272 czyli wahacz górny lewy BMW X5 E70 / X6 E71. ' +
+      'Znajdź WSZYSTKIE modele do których fabrycznie pasuje część o numerze OEM: ' + oeNums.join(', ') + '. ' +
       (brand ? 'Marka: ' + brand + '. ' : '') +
-      'Algorytm: ' +
-      '1. Zdekoduj numer — dla BMW uzupełnij do pełnego 11-cyfrowego numeru OE jeśli potrzeba. ' +
-      '2. Zidentyfikuj dokładnie czym jest część (nazwa techniczna + cechy szczególne np. M-Pakiet, skóra). ' +
-      '3. Podaj WSZYSTKIE kody nadwozia w których ta część była montowana fabrycznie. ' +
-      '4. Jeśli numer wygląda jak numer wewnętrzny poddostawcy — napisz o tym. ' +
-      'Format odpowiedzi — każdy model w osobnej linii z myślnikiem: ' +
-      '- [KOD NADWOZIA] [NAZWA MODELU] [NADWOZIE] [LATA] np.: ' +
-      '- G01 BMW X3 xDrive20d Sedan 2017-2024 ' +
-      '- G02 BMW X4 M40i Coupe 2018-2024 ' +
-      'Tylko lista modeli. Zero wstępu i zakończenia.'
+      'Podaj wyniki jako listę — każdy model w osobnej linii zaczynającej się od myślnika. ' +
+      'Format każdej linii: - [MARKA] [KOD NADWOZIA] [NAZWA MODELU] [WERSJE SILNIKOWE] [LATA] ' +
+      'Przykład prawidłowej odpowiedzi: ' +
+      '- BMW X5 (E70) xDrive30d/xDrive48i 2006-2013 ' +
+      '- BMW X6 (E71) xDrive35i/xDrive50i 2008-2014 ' +
+      'Podaj TYLKO listę z myślnikami. Żadnych nagłówków, komentarzy ani wyjaśnień.'
     );
 
     var lines = raw.split('\n');
@@ -451,7 +450,9 @@ async function lookupCompat() {
     lines.forEach(function(line) {
       line = line.trim();
       line = line.replace(/^[-*•]\s*/, '').replace(/^\d+\.\s*/, '').trim();
-      if (line.length > 3) models.push(line);
+      if (line.length > 5 && !line.match(/^(krok|uwaga|ważne|przykład|format|nota|pełny|numer|rozwin)/i)) {
+        models.push(line);
+      }
     });
 
     if (!models.length) {
@@ -472,23 +473,21 @@ async function suggestTitle() {
   btnLoad('title-ai-btn','Generuję tytuł…');
   try {
     var raw = await callAI(
-      'Jesteś ekspertem od sprzedaży oryginalnych części samochodowych OEM na Allegro. ' +
-      'Wygeneruj 3 propozycje tytułu aukcji Allegro dla tej części. ' +
-      'Każdy tytuł w osobnej linii, zaczynając od cyfry i kropki. ' +
-      'Budowa każdego tytułu (kolejność obowiązkowa, TYLKO wielkie litery): ' +
-      '[MARKA] [2-3 KODY NADWOZIA] [PEŁNA NAZWA CZĘŚCI PO POLSKU] OEM [NUMER OEM] ORYGINAŁ ' +
-      'Przykład: BMW G01 G02 AIRBAG PODUSZKA KIEROWCY SKÓRA OEM 32699887806 ORYGINAŁ ' +
-      'Każdy tytuł maksymalnie 75 znaków. Jeśli za długi — skróć kody nadwozia. ' +
-      'Tylko tytuły, zero komentarzy. ' +
+      'Jesteś ekspertem od sprzedaży części OEM na Allegro. ' +
+      'WAŻNE dla BMW: krótki numer rozwiń do pełnego OE (np. 8091171 = 33306867272 wahacz BMW E70/E71). ' +
+      'Wygeneruj JEDEN tytuł aukcji (TYLKO wielkie litery, max 75 znaków). ' +
+      'Struktura: [MARKA] [KOD NADWOZIA np. E70 E71] [PEŁNA POLSKA NAZWA CZĘŚCI] OEM [NUMER OEM] ORYGINAŁ ' +
+      'Przykłady: ' +
+      'BMW E70 E71 WAHACZ POPRZECZNY GORNY LEWY OEM 33306867272 ORYGINAL ' +
+      'BMW G01 G02 AIRBAG PODUSZKA KIEROWCY SKORA OEM 32699887806 ORYGINAL ' +
+      'Podaj TYLKO sam tytuł. Bez cudzysłowów. Bez komentarzy. ' +
       (brand ? 'Marka: ' + brand + '. ' : '') +
       (oeNums.length ? 'Numer OEM: ' + oeNums.join(', ') + '.' : ''),
-      300
+      120
     );
 
-    // weź pierwszą linię która wygląda jak tytuł
-    var lines = raw.split('\n').map(function(l){ return l.replace(/^\d+\.\s*/,'').replace(/^[-*]\s*/,'').trim(); }).filter(function(l){ return l.length > 10; });
+    var lines = raw.split('\n').map(function(l){ return l.replace(/^\d+\.\s*/,'').replace(/^[-*]\s*/,'').replace(/^["']|["']$/g,'').trim(); }).filter(function(l){ return l.length > 10; });
     var title = lines[0] || '';
-    title = title.replace(/^["']|["']$/g,'').trim();
     if (title.length > 75) title = title.substring(0, 75).trim();
 
     if (title) {
