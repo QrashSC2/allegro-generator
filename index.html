@@ -260,16 +260,13 @@
       <div class="card-body">
         <div class="field">
           <label>Opis przedmiotu</label>
-          <div style="position:relative">
-            <textarea id="f-desc" placeholder="Wpisz numer OEM i kliknij przycisk aby AI wygenerowała opis…" style="padding-right:110px"></textarea>
-            <button type="button" onclick="generateDesc()" id="desc-ai-btn" style="
-              position:absolute;right:6px;top:6px;
-              font-family:inherit;font-size:11.5px;font-weight:600;
-              color:#fff;background:var(--accent);border:none;
-              border-radius:5px;padding:5px 10px;cursor:pointer;white-space:nowrap;
-              -webkit-appearance:none;
-            ">✦ Generuj z AI</button>
-          </div>
+          <textarea id="f-desc" placeholder="Wpisz numer OEM i kliknij przycisk aby AI wygenerowała opis…" style="min-height:100px;"></textarea>
+          <button type="button" onclick="generateDesc()" id="desc-ai-btn" style="
+            margin-top:6px;width:100%;font-family:inherit;font-size:12.5px;font-weight:600;
+            color:#fff;background:var(--accent);border:none;border-radius:var(--radius-sm);
+            padding:8px 14px;cursor:pointer;-webkit-appearance:none;display:flex;
+            align-items:center;justify-content:center;gap:6px;
+          ">✦ Generuj opis z AI</button>
           <p class="hint" id="desc-ai-hint">Wpisz numer OEM powyżej, a AI zaproponuje opis — możesz go potem edytować.</p>
         </div>
         <div class="field">
@@ -442,7 +439,8 @@ async function lookupCompat() {
       'Przykład prawidłowej odpowiedzi: ' +
       '- BMW X5 (E70) xDrive30d/xDrive48i 2006-2013 ' +
       '- BMW X6 (E71) xDrive35i/xDrive50i 2008-2014 ' +
-      'Podaj TYLKO listę z myślnikami. Żadnych nagłówków, komentarzy ani wyjaśnień.'
+      'Podaj TYLKO listę z myślnikami. Żadnych nagłówków, komentarzy ani wyjaśnień.',
+      2000
     );
 
     var lines = raw.split('\n');
@@ -450,7 +448,12 @@ async function lookupCompat() {
     lines.forEach(function(line) {
       line = line.trim();
       line = line.replace(/^[-*•]\s*/, '').replace(/^\d+\.\s*/, '').trim();
-      if (line.length > 5 && !line.match(/^(krok|uwaga|ważne|przykład|format|nota|pełny|numer|rozwin)/i)) {
+      // pomiń linie puste, za krótkie lub wyglądające jak komentarz/nagłówek
+      if (line.length > 5
+        && !line.match(/^(krok|uwaga|ważne|przykład|format|nota|oto|lista|poniżej|znalazłem|rozwin|wynik)/i)
+        && !line.match(/^(here|note|the following|below|result)/i)
+        && line.match(/\d{4}|\bE\d{2}\b|\bF\d{2}\b|\bG\d{2}\b|\bW\d{3}\b/i) // musi zawierać rok lub kod nadwozia
+      ) {
         models.push(line);
       }
     });
@@ -483,7 +486,7 @@ async function suggestTitle() {
       'Podaj TYLKO sam tytuł. Bez cudzysłowów. Bez komentarzy. ' +
       (brand ? 'Marka: ' + brand + '. ' : '') +
       (oeNums.length ? 'Numer OEM: ' + oeNums.join(', ') + '.' : ''),
-      120
+      400
     );
 
     var lines = raw.split('\n').map(function(l){ return l.replace(/^\d+\.\s*/,'').replace(/^[-*]\s*/,'').replace(/^["']|["']$/g,'').trim(); }).filter(function(l){ return l.length > 10; });
