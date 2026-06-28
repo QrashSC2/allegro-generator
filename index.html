@@ -444,14 +444,23 @@ async function lookupCompat() {
     var oeStr = oeNums.join(', ');
     var partName = v('f-part-name');
     var raw = await callAI(
-      'Szukaj w internecie (realoem.com, bmwstore.pl, oeparts.pl) części o numerze DOKŁADNIE: ' + oeStr + (brand ? ' marki ' + brand : '') + '. ' +
+      'Przeszukaj internet w celu znalezienia informacji o części samochodowej. ' +
+      'Numer części: ' + oeStr + (brand ? '. Marka: ' + brand : '') + '. ' +
       (partName ? 'Nazwa części wg sprzedającego: ' + partName + '. ' : '') +
-      'WAŻNE: szukaj tego numeru DOKŁADNIE. Nie dodawaj cyfr. Numer z dodatkowymi cyframi to INNA część. ' +
-      'Podaj listę modeli do których ta część pasuje — każdy w osobnej linii z myślnikiem. ' +
-      'Format: - [MARKA] [NAZWA MODELU] [KOD NADWOZIA] [WERSJA np. LCI/LIFT/M-Pakiet] [LATA] ' +
-      'Przykład: - BMW X5 G05 LCI xDrive40i 2021-2023 ' +
-      'Jeśli nie znajdziesz dokładnego numeru — napisz tylko: BRAK DANYCH ' +
-      'TYLKO lista z myślnikami. Zero komentarzy.',
+      'Szukaj na tych stronach (w tej kolejności): ' +
+      '1. bmwstore.pl - wpisz numer w wyszukiwarkę ' +
+      '2. realoem.com - wyszukaj numer ' +
+      '3. Google: "' + oeStr + (brand ? ' ' + brand : '') + ' pasuje do" ' +
+      'WAŻNE: Numer może być alphanumeryczny (np. 5A0E434) lub cyfrowy — szukaj go dokładnie tak jak podano. ' +
+      'NIE modyfikuj numeru, NIE dodawaj ani NIE usuwaj żadnych znaków. ' +
+      'Na podstawie znalezionych wyników podaj listę modeli do których ta część pasuje. ' +
+      'Każdy model w osobnej linii z myślnikiem: ' +
+      '- [MARKA] [NAZWA MODELU] [KOD NADWOZIA] [WERSJA np. LCI/Touring/M-Pakiet] [LATA] ' +
+      'Przykłady: ' +
+      '- BMW Seria 5 G61 Touring 520d 2023-2025 ' +
+      '- BMW X5 G05 LCI xDrive40i 2021-2024 ' +
+      'Jeśli nie znajdziesz żadnych danych — napisz tylko: BRAK DANYCH ' +
+      'Podaj TYLKO listę z myślnikami. Zero innych komentarzy.',
       2000, true
     );
 
@@ -466,7 +475,7 @@ async function lookupCompat() {
     lines.forEach(function(line) {
       line = line.trim();
       line = line.replace(/^[-*•]\s*/, '').replace(/^\d+\.\s*/, '').trim();
-      if (line.length > 8 && line.match(/\b(E|F|G|W|C|X|Y|Z)\d{2,3}\b|\b(19|20)\d{2}\b/i)) {
+      if (line.length > 8 && line.match(/\b(G|F|E|W|C|X|Y|Z|A|B|S|N|R|V)\d{2,3}\b|\b(19|20)\d{2}\b|\bSeria\b|\bSeries\b|\bClass\b|\bKlasse\b/i)) {
         models.push(line);
       }
     });
@@ -553,12 +562,25 @@ function useTitle() {
    OE ROWS
 ══════════════════════════════════════ */
 var oeCount = 0;
+function clearAiResults() {
+  // Wyczyść wszystkie wyniki AI przy zmianie numeru OE
+  compatList.length = 0;
+  renderTags();
+  document.getElementById('f-desc').value = '';
+  document.getElementById('title-suggestion-wrap').style.display = 'none';
+  document.getElementById('title-suggestion').textContent = '';
+  setHint('ai-hint','Wpisz numer OE i wybierz markę — AI wypełni listę automatycznie.','');
+  setHint('desc-ai-hint','Wpisz numer OE powyżej, a AI zaproponuje opis — możesz go potem edytować.','');
+  setHint('title-ai-hint','Wybierz markę i wpisz numer OE — AI zaproponuje tytuł.','');
+  generate();
+}
+
 function addOeRow(val) {
   oeCount++;
   var n=oeCount, list=document.getElementById('oe-list');
   var row=document.createElement('div'); row.className='oe-row'; row.id='oe-row-'+n;
   var inp=document.createElement('input'); inp.type='text'; inp.id='oe-'+n; inp.placeholder='np. 32699887806';
-  inp.addEventListener('input', generate);
+  inp.addEventListener('input', clearAiResults);
   var del=document.createElement('button'); del.type='button'; del.className='oe-row-del'; del.textContent='×';
   del.onclick=function(){removeOeRow(n);};
   row.appendChild(inp); row.appendChild(del); list.appendChild(row);
