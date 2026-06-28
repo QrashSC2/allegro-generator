@@ -91,7 +91,7 @@
   .field textarea { min-height: 68px; line-height: 1.55; }
   .hint { font-size: 11px; color: var(--text3); margin-top: 4px; }
 
-  /* ── OEM ROWS ── */
+  /* ── OE ROWS ── */
   .oe-list { display: flex; flex-direction: column; gap: 7px; }
   .oe-row { display: flex; gap: 6px; align-items: center; }
   .oe-row input { flex: 1; font-family: inherit; font-size: 13.5px; color: var(--text); background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; outline: none; transition: border-color .15s, box-shadow .15s; -webkit-appearance: none; }
@@ -178,9 +178,9 @@
 <div class="main">
   <div class="col-form">
 
-    <!-- MARKA & OEM -->
+    <!-- MARKA & OE -->
     <div class="card">
-      <div class="card-head"><span class="dot"></span><h2>Marka &amp; numery OEM</h2></div>
+      <div class="card-head"><span class="dot"></span><h2>Marka &amp; numery OE</h2></div>
       <div class="card-body">
         <div class="field">
           <label>Marka pojazdu</label>
@@ -197,13 +197,13 @@
           </select>
         </div>
         <div class="field">
-          <label>Numery części OEM</label>
+          <label>Numery części OE</label>
           <div class="oe-list" id="oe-list"></div>
           <button class="add-oe-btn" type="button" onclick="addOeRow()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Dodaj kolejny numer OEM
+            Dodaj kolejny numer OE
           </button>
-          <p class="hint">Pierwszy numer OEM trafi do zdania „porównaj numer katalogowy"</p>
+          <p class="hint">Pierwszy numer OE trafi do zdania „porównaj numer katalogowy"</p>
         </div>
       </div>
     </div>
@@ -217,7 +217,7 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
             Sprawdź kompatybilność z AI
           </button>
-          <p class="hint" id="ai-hint">Wpisz numer OEM i wybierz markę — AI wypełni listę automatycznie.</p>
+          <p class="hint" id="ai-hint">Wpisz numer OE i wybierz markę — AI wypełni listę automatycznie.</p>
         </div>
         <div class="field">
           <label>Modele (dodaj lub popraw ręcznie)</label>
@@ -241,7 +241,7 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
             Sugeruj tytuł z AI
           </button>
-          <p class="hint" id="title-ai-hint">Wybierz markę i wpisz numer OEM — AI zaproponuje tytuł.</p>
+          <p class="hint" id="title-ai-hint">Wybierz markę i wpisz numer OE — AI zaproponuje tytuł.</p>
         </div>
         <div id="title-suggestion-wrap" style="display:none;" class="field">
           <label>Sugerowany tytuł <span style="font-weight:400;color:var(--text3)">(kliknij aby użyć)</span></label>
@@ -249,7 +249,7 @@
         </div>
         <div class="field">
           <label>Tytuł (edytuj lub wpisz ręcznie)</label>
-          <input id="f-title" type="text" placeholder="BMW G01 X3 OEM AIRBAG PODUSZKA KIEROWCY 6998878 ORYGINAŁ">
+          <input id="f-title" type="text" placeholder="BMW G01 X3 OE AIRBAG PODUSZKA KIEROWCY 6998878 ORYGINAŁ">
         </div>
       </div>
     </div>
@@ -260,14 +260,14 @@
       <div class="card-body">
         <div class="field">
           <label>Opis przedmiotu</label>
-          <textarea id="f-desc" placeholder="Wpisz numer OEM i kliknij przycisk aby AI wygenerowała opis…" style="min-height:100px;"></textarea>
+          <textarea id="f-desc" placeholder="Wpisz numer OE i kliknij przycisk aby AI wygenerowała opis…" style="min-height:100px;"></textarea>
           <button type="button" onclick="generateDesc()" id="desc-ai-btn" style="
             margin-top:6px;width:100%;font-family:inherit;font-size:12.5px;font-weight:600;
             color:#fff;background:var(--accent);border:none;border-radius:var(--radius-sm);
             padding:8px 14px;cursor:pointer;-webkit-appearance:none;display:flex;
             align-items:center;justify-content:center;gap:6px;
           ">✦ Generuj opis z AI</button>
-          <p class="hint" id="desc-ai-hint">Wpisz numer OEM powyżej, a AI zaproponuje opis — możesz go potem edytować.</p>
+          <p class="hint" id="desc-ai-hint">Wpisz numer OE powyżej, a AI zaproponuje opis — możesz go potem edytować.</p>
         </div>
         <div class="field">
           <label>Stan wizualny</label>
@@ -398,15 +398,15 @@ function setHint(id, msg, type) { var el=document.getElementById(id); if(!el)ret
 /* ── AI: opis przedmiotu ── */
 async function generateDesc() {
   var oeNums = getOeNums(); var brand = v('f-brand');
-  if (!oeNums.length && !brand) { setHint('desc-ai-hint','Wybierz markę lub wpisz numer OEM.','warn'); return; }
+  if (!oeNums.length && !brand) { setHint('desc-ai-hint','Wybierz markę lub wpisz numer OE.','warn'); return; }
   var btn = document.getElementById('desc-ai-btn');
   btn.disabled=true; btn.textContent='…';
   document.getElementById('f-desc').value = '';
   try {
     var oeStr = oeNums.join(', ');
     var text = await callAI(
-      'Znajdź w internecie część samochodową o numerze OEM: ' + oeStr + (brand ? ' marki ' + brand : '') + '. ' +
-      'Przeszukaj realoem.com, bmwstore.pl lub odpowiedni katalog aby ustalić dokładnie co to za część. ' +
+      'Znajdź w internecie część samochodową o numerze OE: ' + oeStr + (brand ? ' marki ' + brand : '') + '. ' +
+      'Przeszukaj ovoko.pl, realoem.com, bmwstore.pl lub odpowiedni katalog aby ustalić dokładnie co to za część. ' +
       'Napisz opis tej konkretnej części po polsku (2-3 zdania). ' +
       'Zawrzyj: pełna techniczna nazwa części, gdzie jest zamontowana w aucie, do czego służy. ' +
       'Jeśli ta część wymaga kodowania po montażu dodaj: "Część kodowana - przed wysyłką skontaktujemy się telefonicznie." ' +
@@ -425,15 +425,15 @@ async function generateDesc() {
 /* ── AI: kompatybilność ── */
 async function lookupCompat() {
   var oeNums = getOeNums(); var brand = v('f-brand');
-  if (!oeNums.length) { setHint('ai-hint','Wpisz najpierw numer OEM.','warn'); return; }
+  if (!oeNums.length) { setHint('ai-hint','Wpisz najpierw numer OE.','warn'); return; }
   btnLoad('ai-btn','Szukam modeli…');
   compatList.length = 0;
   renderTags();
   try {
     var oeStr = oeNums.join(', ');
     var raw = await callAI(
-      'Sprawdź w internecie (realoem.com, bmwstore.pl lub odpowiedni katalog dla tej marki) ' +
-      'do jakich konkretnych modeli samochodów pasuje część o numerze OEM: ' + oeStr + (brand ? ' marki ' + brand : '') + '. ' +
+      'Sprawdź w internecie (ovoko.pl, realoem.com, bmwstore.pl lub odpowiedni katalog dla tej marki) ' +
+      'do jakich konkretnych modeli samochodów pasuje część o numerze OE: ' + oeStr + (brand ? ' marki ' + brand : '') + '. ' +
       'Podaj TYLKO listę kompatybilnych modeli na podstawie znalezionych danych — każdy w osobnej linii z myślnikiem. ' +
       'Format: - [MARKA] [KOD NADWOZIA] [NAZWA MODELU] [LATA PRODUKCJI] ' +
       'Przykład: - BMW X5 (G05) xDrive40i 2018-2023 ' +
@@ -459,7 +459,7 @@ async function lookupCompat() {
     });
 
     if (!models.length) {
-      setHint('ai-hint','Nie rozpoznano numeru OEM. Dodaj modele ręcznie.','warn');
+      setHint('ai-hint','Nie rozpoznano numeru OE. Dodaj modele ręcznie.','warn');
     } else {
       models.forEach(function(m){ if(m && compatList.indexOf(m)===-1) compatList.push(m); });
       renderTags(); generate();
@@ -472,17 +472,17 @@ async function lookupCompat() {
 /* ── AI: tytuł ── */
 async function suggestTitle() {
   var oeNums=getOeNums(), brand=v('f-brand');
-  if (!brand&&!oeNums.length) { setHint('title-ai-hint','Wybierz markę i wpisz numer OEM.','warn'); return; }
+  if (!brand&&!oeNums.length) { setHint('title-ai-hint','Wybierz markę i wpisz numer OE.','warn'); return; }
   btnLoad('title-ai-btn','Generuję tytuł…');
   document.getElementById('title-suggestion-wrap').style.display = 'none';
   document.getElementById('title-suggestion').textContent = '';
   try {
     var oeStr = oeNums.join(', ');
     var raw = await callAI(
-      'Sprawdź w internecie czym jest część o numerze OEM: ' + oeStr + (brand ? ' marki ' + brand : '') + '. ' +
+      'Sprawdź w internecie czym jest część o numerze OE: ' + oeStr + (brand ? ' marki ' + brand : '') + '. ' +
       'Odpowiedz TYLKO jedną linią — samym tytułem aukcji Allegro, bez żadnego wstępu ani komentarza. ' +
-      'Format (TYLKO WIELKIE LITERY, max 75 znaków): [MARKA] [KOD NADWOZIA] [NAZWA CZĘŚCI] OEM [NUMER] ORYGINAŁ ' +
-      'Przykład: BMW G05 WAHACZ POPRZECZNY GORNY LEWY OEM 33306867272 ORYGINAL ' +
+      'Format (TYLKO WIELKIE LITERY, max 75 znaków): [MARKA] [KOD NADWOZIA] [NAZWA CZĘŚCI] OE [NUMER] ORYGINAŁ ' +
+      'Przykład: BMW G05 WAHACZ POPRZECZNY GORNY LEWY OE 33306867272 ORYGINAL ' +
       'Twoja odpowiedź to WYŁĄCZNIE ten jeden tytuł — żadnych innych słów.',
       400, true
     );
@@ -494,7 +494,7 @@ async function suggestTitle() {
     var title = '';
     for (var i = 0; i < lines.length; i++) {
       var l = lines[i];
-      if ((l.includes('OEM') || l.includes('ORYGINAL') || l.includes('ORYGINAŁ')) && l.toUpperCase() === l) {
+      if ((l.includes('OE') || l.includes('ORYGINAL') || l.includes('ORYGINAŁ')) && l.toUpperCase() === l) {
         title = l; break;
       }
     }
@@ -526,7 +526,7 @@ function useTitle() {
 }
 
 /* ══════════════════════════════════════
-   OEM ROWS
+   OE ROWS
 ══════════════════════════════════════ */
 var oeCount = 0;
 function addOeRow(val) {
@@ -570,12 +570,12 @@ function fallback(val,ph){return val||ph;}
 var BOLD_EXACT=['Witam,','mam na sprzedaż','Możliwe że pasuje też do innych modeli.','Chętnie doślę dodatkowe zdjęcia.','Wersja europejska.','PODANA CENA DOTYCZY PRODUKTÓW WIDOCZNYCH NA ZDJĘCIACH TEJ AUKCJI. WSZYSTKICH :)'];
 var BOLD_HAS=['Stan wizualny:','Stan techniczny:','Pasuje Do:','Dodatkowe uwagi:','na 100% odpowiada Państwa wersji wyposażenia.','JESTEM NA WHATSAPP'];
 
-function renderLines(text,initials,oemLine){
+function renderLines(text,initials,oeLine){
   return text.split('\n').map(function(line){
     if(line==='') return '<div><br></div>';
     var esc=escHtml(line),bold=false;
     if(initials&&line==='• '+initials+' •') bold=true;
-    if(oemLine&&line===oemLine) bold=true;
+    if(oeLine&&line===oeLine) bold=true;
     if(BOLD_EXACT.indexOf(line)!==-1) bold=true;
     if(!bold) for(var i=0;i<BOLD_HAS.length;i++) if(line.indexOf(BOLD_HAS[i])!==-1){bold=true;break;}
     return bold?'<div><strong>'+esc+'</strong></div>':'<div>'+esc+'</div>';
@@ -597,15 +597,15 @@ function generate(){
   else if(techstate==='Dobry - część używana z defektami nie wpływającymi na użytkowanie') techText=techstate+(techcustom?'\nOpis defektu: '+techcustom:'');
   else techText=techstate||'(wybierz stan techniczny)';
 
-  var oemLine=brand?'Część jest w 100% oryginalna OEM '+brand+'.':'';
-  var catText=oeNums.length?'('+oeNums[0]+')':'(numer części OEM)';
+  var oeLine=brand?'Część jest w 100% oryginalna OE '+brand+'.':'';
+  var catText=oeNums.length?'('+oeNums[0]+')':'(numer części OE)';
   var notes=condspec||'BRAK';
-  var oeSection=oeNums.length===1?'Numer części OEM: '+oeNums[0]:oeNums.length>1?'Numery części OEM: '+oeNums.join(', '):'';
+  var oeSection=oeNums.length===1?'Numer części OE: '+oeNums[0]:oeNums.length>1?'Numery części OE: '+oeNums.join(', '):'';
   var compatLines=compatList.length?compatList.map(function(c){return'* '+c;}).join('\n'):'* (dodaj modele w formularzu)';
 
   var result=
 'Witam,\n'+'mam na sprzedaż\n'+fallback(title,'(wpisz tytuł aukcji)')+'\n\n'+
-'Opis przedmiotu: '+fallback(desc,'(wpisz opis przedmiotu)')+(oemLine?'\n'+oemLine:'')+'\n\n'+
+'Opis przedmiotu: '+fallback(desc,'(wpisz opis przedmiotu)')+(oeLine?'\n'+oeLine:'')+'\n\n'+
 (oeSection?oeSection+'\n\n':'')+
 'Stan wizualny: '+visualText+'\n\n'+
 'Stan techniczny: '+techText+'\n\n'+
@@ -614,7 +614,7 @@ function generate(){
 'Dodatkowe uwagi: '+notes+'\n\n'+
 'Przed zakupem uprzejmie prosimy o porównanie numeru katalogowego '+catText+' oraz oznaczeń ze swojej części, aby upewnić się, że część na 100% odpowiada Państwa wersji wyposażenia.\n\n'+
 'Chętnie doślę dodatkowe zdjęcia.\nWersja europejska.\n\n'+
-(brand?'OEM '+brand.toUpperCase():'OEM')+' | PRODUKT ORYGINALNY\n'+
+(brand?'OE '+brand.toUpperCase():'OE')+' | PRODUKT ORYGINALNY\n'+
 'PODANA CENA DOTYCZY PRODUKTÓW WIDOCZNYCH NA ZDJĘCIACH TEJ AUKCJI. WSZYSTKICH :)\n'+
 'WIĘCEJ CZĘŚCI ZNAJDZIESZ NA INNYCH AUKCJACH MOJEGO PROFILU.\n\n'+
 'Polecam i zapraszam do zakupu!\n'+
@@ -622,13 +622,13 @@ function generate(){
 'JESTEM NA WHATSAPP – sprawdź zakładkę.'+(initials?'\n\n• '+initials+' •':'');
 
   lastGenerated=result;
-  document.getElementById('output').innerHTML=renderLines(result,initials,oemLine);
+  document.getElementById('output').innerHTML=renderLines(result,initials,oeLine);
 }
 
 function resetOutput(){
   if(!lastGenerated) return;
-  var initials=getInitials(),brand=v('f-brand'),oemLine=brand?'Część jest w 100% oryginalna OEM '+brand+'.':'';
-  document.getElementById('output').innerHTML=renderLines(lastGenerated,initials,oemLine);
+  var initials=getInitials(),brand=v('f-brand'),oeLine=brand?'Część jest w 100% oryginalna OE '+brand+'.':'';
+  document.getElementById('output').innerHTML=renderLines(lastGenerated,initials,oeLine);
 }
 
 /* ══════════════════════════════════════
