@@ -205,6 +205,11 @@
           </button>
           <p class="hint">Pierwszy numer OE trafi do zdania „porównaj numer katalogowy"</p>
         </div>
+        <div class="field">
+          <label>Nazwa części</label>
+          <input id="f-part-name" type="text" placeholder="np. ślizg mocowanie zderzaka tył prawy" oninput="generate()">
+          <p class="hint">Wpisz nazwę części którą sprzedajesz — AI użyje jej do tytułu i opisu (bez zgadywania)</p>
+        </div>
       </div>
     </div>
 
@@ -350,14 +355,14 @@
 function confirmInitials() {
   var val = document.getElementById('popup-initials').value.trim().toUpperCase();
   if (!val) return;
-  localStorage.setItem('allegro_initials', val);
   document.getElementById('popup').classList.add('hidden');
   document.getElementById('header-badge').textContent = val;
   generate();
 }
 
 function changeInitials() {
-  document.getElementById('popup-initials').value = localStorage.getItem('allegro_initials') || '';
+  var current = document.getElementById('header-badge').textContent;
+  document.getElementById('popup-initials').value = current === '–' ? '' : current;
   document.getElementById('popup').classList.remove('hidden');
   setTimeout(function(){ document.getElementById('popup-initials').focus(); }, 50);
 }
@@ -372,7 +377,8 @@ document.getElementById('popup-initials').addEventListener('keydown', function(e
 });
 
 function getInitials() {
-  return localStorage.getItem('allegro_initials') || '';
+  var badge = document.getElementById('header-badge').textContent;
+  return badge === '–' ? '' : badge;
 }
 
 /* ══════════════════════════════════════
@@ -397,24 +403,29 @@ function setHint(id, msg, type) { var el=document.getElementById(id); if(!el)ret
 
 /* ── AI: opis przedmiotu ── */
 async function generateDesc() {
-  var oeNums = getOeNums(); var brand = v('f-brand');
-  if (!oeNums.length && !brand) { setHint('desc-ai-hint','Wybierz markę lub wpisz numer OE.','warn'); return; }
+  var oeNums = getOeNums(); var brand = v('f-brand'); var partName = v('f-part-name');
+  if (!brand && !oeNums.length && !partName) { setHint('desc-ai-hint','Wpisz markę, numer OE lub nazwę części.','warn'); return; }
   var btn = document.getElementById('desc-ai-btn');
   btn.disabled=true; btn.textContent='…';
   document.getElementById('f-desc').value = '';
   try {
-    var oeStr = oeNums.join(', ');
+    var compatCtx = compatList.length ? 'Część pasuje do: ' + compatList.slice(0,3).join(', ') + '. ' : '';
     var text = await callAI(
-      'Znajdź w internecie część samochodową o numerze OE: ' + oeStr + (brand ? ' marki ' + brand : '') + '. ' +
-      'Przeszukaj ovoko.pl, realoem.com, bmwstore.pl lub odpowiedni katalog aby ustalić dokładnie co to za część. ' +
-      'Napisz opis tej konkretnej części po polsku (2-3 zdania). ' +
-      'Zawrzyj: pełna techniczna nazwa części, gdzie jest zamontowana w aucie, do czego służy. ' +
-      'Jeśli ta część wymaga kodowania po montażu dodaj: "Część kodowana - przed wysyłką skontaktujemy się telefonicznie." ' +
-      'Pisz zwięźle i technicznie. Bez markdown. Bez wstępów w stylu "Oferujemy" lub "Oto" lub "Na podstawie". Tylko sam opis.',
-      1500, true
+      'Napisz opis przedmiotu aukcji po polsku (2-3 zdania) dla tej części samochodowej. ' +
+      'Masz następujące pewne dane: ' +
+      (brand ? 'Marka: ' + brand + '. ' : '') +
+      (partName ? 'Nazwa części: ' + partName + '. ' : '') +
+      (oeNums.length ? 'Numer OE: ' + oeNums.join(', ') + '. ' : '') +
+      compatCtx +
+      'Opis musi zawierać: co to jest za część, gdzie w aucie jest zamontowana, do czego służy. ' +
+      'Jeśli to elektronika wymagająca kodowania (sterownik, moduł, airbag, BSI, ECU, czujnik parkowania) dodaj: ' +
+      '"Część kodowana - przed wysyłką skontaktujemy się telefonicznie." ' +
+      'NIE powtarzaj numeru OE w opisie. ' +
+      'Zacznij opis od razu od nazwy części — zero wstępów.',
+      1000, false
     );
     text = text.trim().replace(/^["'*#`]+|["'*#`]+$/g,'').trim();
-    text = text.replace(/^(Na podstawie|Znalazłem|Oto|Po przeszukaniu|Zgodnie z|Based on)[^.]*\. */i, '');
+    text = text.replace(/^(Na podstawie|Znalazłem|Oto|Oferujemy|Część o numerze)[^.]*\.\s*/i, '');
     document.getElementById('f-desc').value = text;
     setHint('desc-ai-hint','Opis wygenerowany — możesz go edytować.','ok');
     generate();
@@ -431,14 +442,16 @@ async function lookupCompat() {
   renderTags();
   try {
     var oeStr = oeNums.join(', ');
+    var partName = v('f-part-name');
     var raw = await callAI(
-      'Sprawdź w internecie (ovoko.pl, realoem.com, bmwstore.pl lub odpowiedni katalog dla tej marki) ' +
-      'do jakich konkretnych modeli samochodów pasuje część o numerze OE: ' + oeStr + (brand ? ' marki ' + brand : '') + '. ' +
-      'Podaj TYLKO listę kompatybilnych modeli na podstawie znalezionych danych — każdy w osobnej linii z myślnikiem. ' +
-      'Format: - [MARKA] [KOD NADWOZIA] [NAZWA MODELU] [LATA PRODUKCJI] ' +
-      'Przykład: - BMW X5 (G05) xDrive40i 2018-2023 ' +
-      'Jeśli nie możesz znaleźć informacji napisz tylko: BRAK DANYCH ' +
-      'Podaj TYLKO listę z myślnikami. Zero komentarzy i wyjaśnień.',
+      'Szukaj w internecie (realoem.com, bmwstore.pl, oeparts.pl) części o numerze DOKŁADNIE: ' + oeStr + (brand ? ' marki ' + brand : '') + '. ' +
+      (partName ? 'Nazwa części wg sprzedającego: ' + partName + '. ' : '') +
+      'WAŻNE: szukaj tego numeru DOKŁADNIE. Nie dodawaj cyfr. Numer z dodatkowymi cyframi to INNA część. ' +
+      'Podaj listę modeli do których ta część pasuje — każdy w osobnej linii z myślnikiem. ' +
+      'Format: - [MARKA] [NAZWA MODELU] [KOD NADWOZIA] [WERSJA np. LCI/LIFT/M-Pakiet] [LATA] ' +
+      'Przykład: - BMW X5 G05 LCI xDrive40i 2021-2023 ' +
+      'Jeśli nie znajdziesz dokładnego numeru — napisz tylko: BRAK DANYCH ' +
+      'TYLKO lista z myślnikami. Zero komentarzy.',
       2000, true
     );
 
@@ -471,20 +484,32 @@ async function lookupCompat() {
 
 /* ── AI: tytuł ── */
 async function suggestTitle() {
-  var oeNums=getOeNums(), brand=v('f-brand');
-  if (!brand&&!oeNums.length) { setHint('title-ai-hint','Wybierz markę i wpisz numer OE.','warn'); return; }
+  var oeNums=getOeNums(), brand=v('f-brand'), partName=v('f-part-name');
+  if (!brand && !oeNums.length && !partName) { setHint('title-ai-hint','Wypełnij markę, numer OE lub nazwę części.','warn'); return; }
   btnLoad('title-ai-btn','Generuję tytuł…');
   document.getElementById('title-suggestion-wrap').style.display = 'none';
   document.getElementById('title-suggestion').textContent = '';
   try {
     var oeStr = oeNums.join(', ');
+    // wyciągnij kod nadwozia i nazwę modelu z pierwszych wyników compat
+    var compatCtx = '';
+    if (compatList.length) {
+      compatCtx = 'Modele do których pasuje: ' + compatList.slice(0,3).join(' | ') + '. ';
+    }
     var raw = await callAI(
-      'Sprawdź w internecie czym jest część o numerze OE: ' + oeStr + (brand ? ' marki ' + brand : '') + '. ' +
-      'Odpowiedz TYLKO jedną linią — samym tytułem aukcji Allegro, bez żadnego wstępu ani komentarza. ' +
-      'Format (TYLKO WIELKIE LITERY, max 75 znaków): [MARKA] [KOD NADWOZIA] [NAZWA CZĘŚCI] OE [NUMER] ORYGINAŁ ' +
-      'Przykład: BMW G05 WAHACZ POPRZECZNY GORNY LEWY OE 33306867272 ORYGINAL ' +
-      'Twoja odpowiedź to WYŁĄCZNIE ten jeden tytuł — żadnych innych słów.',
-      400, true
+      'Wygeneruj tytuł aukcji Allegro dla części samochodowej. ' +
+      'Masz następujące dane: ' +
+      (brand ? 'Marka: ' + brand + '. ' : '') +
+      (partName ? 'Nazwa części: ' + partName + '. ' : '') +
+      (oeStr ? 'Numer OE: ' + oeStr + '. ' : '') +
+      compatCtx +
+      'Format tytułu (TYLKO WIELKIE LITERY, max 75 znaków, PO POLSKU): ' +
+      '[MARKA] [NAZWA MODELU KOD NADWOZIA] [WERSJA: LCI/LIFT/M PAKIET jeśli dotyczy] [NAZWA CZĘŚCI + STRONA/POZYCJA] [NUMER OE] ' +
+      'Przykłady: ' +
+      'BMW X5 G05 LCI LIFT M PAKIET SLIZG MOCOWANIE ZDERZAKA TYL PRAWY 8085646 ' +
+      'BMW X3 G01 AIRBAG PODUSZKA KIEROWCY SKORA 6998878 ' +
+      'WAŻNE: Odpowiedz TYLKO jedną linią — samym tytułem. Zero wstępów i komentarzy.',
+      300, false
     );
 
     var lines = raw.split('\n').map(function(l){
@@ -492,17 +517,16 @@ async function suggestTitle() {
     }).filter(function(l){ return l.length > 10; });
 
     var title = '';
+    // priorytet: linia wielkich liter zawierająca numer OE
     for (var i = 0; i < lines.length; i++) {
       var l = lines[i];
-      if ((l.includes('OE') || l.includes('ORYGINAL') || l.includes('ORYGINAŁ')) && l.toUpperCase() === l) {
-        title = l; break;
-      }
+      var hasNum = oeNums.length && oeNums.some(function(n){ return l.includes(n); });
+      if (hasNum && l.toUpperCase() === l) { title = l; break; }
     }
+    // fallback: pierwsza linia wielkich liter
     if (!title) {
       for (var j = 0; j < lines.length; j++) {
-        if (lines[j].toUpperCase() === lines[j] && lines[j].length > 15) {
-          title = lines[j]; break;
-        }
+        if (lines[j].toUpperCase() === lines[j] && lines[j].length > 15) { title = lines[j]; break; }
       }
     }
     if (!title) title = lines[0] || '';
@@ -570,12 +594,12 @@ function fallback(val,ph){return val||ph;}
 var BOLD_EXACT=['Witam,','mam na sprzedaż','Możliwe że pasuje też do innych modeli.','Chętnie doślę dodatkowe zdjęcia.','Wersja europejska.','PODANA CENA DOTYCZY PRODUKTÓW WIDOCZNYCH NA ZDJĘCIACH TEJ AUKCJI. WSZYSTKICH :)'];
 var BOLD_HAS=['Stan wizualny:','Stan techniczny:','Pasuje Do:','Dodatkowe uwagi:','na 100% odpowiada Państwa wersji wyposażenia.','JESTEM NA WHATSAPP'];
 
-function renderLines(text,initials,oeLine){
+function renderLines(text,initials,oemLine){
   return text.split('\n').map(function(line){
     if(line==='') return '<div><br></div>';
     var esc=escHtml(line),bold=false;
     if(initials&&line==='• '+initials+' •') bold=true;
-    if(oeLine&&line===oeLine) bold=true;
+    if(oemLine&&line===oemLine) bold=true;
     if(BOLD_EXACT.indexOf(line)!==-1) bold=true;
     if(!bold) for(var i=0;i<BOLD_HAS.length;i++) if(line.indexOf(BOLD_HAS[i])!==-1){bold=true;break;}
     return bold?'<div><strong>'+esc+'</strong></div>':'<div>'+esc+'</div>';
@@ -597,7 +621,7 @@ function generate(){
   else if(techstate==='Dobry - część używana z defektami nie wpływającymi na użytkowanie') techText=techstate+(techcustom?'\nOpis defektu: '+techcustom:'');
   else techText=techstate||'(wybierz stan techniczny)';
 
-  var oeLine=brand?'Część jest w 100% oryginalna OE '+brand+'.':'';
+  var oemLine=brand?'Część jest w 100% oryginalna OE '+brand+'.':'';
   var catText=oeNums.length?'('+oeNums[0]+')':'(numer części OE)';
   var notes=condspec||'BRAK';
   var oeSection=oeNums.length===1?'Numer części OE: '+oeNums[0]:oeNums.length>1?'Numery części OE: '+oeNums.join(', '):'';
@@ -605,7 +629,7 @@ function generate(){
 
   var result=
 'Witam,\n'+'mam na sprzedaż\n'+fallback(title,'(wpisz tytuł aukcji)')+'\n\n'+
-'Opis przedmiotu: '+fallback(desc,'(wpisz opis przedmiotu)')+(oeLine?'\n'+oeLine:'')+'\n\n'+
+'Opis przedmiotu: '+fallback(desc,'(wpisz opis przedmiotu)')+(oemLine?'\n'+oemLine:'')+'\n\n'+
 (oeSection?oeSection+'\n\n':'')+
 'Stan wizualny: '+visualText+'\n\n'+
 'Stan techniczny: '+techText+'\n\n'+
@@ -622,13 +646,13 @@ function generate(){
 'JESTEM NA WHATSAPP – sprawdź zakładkę.'+(initials?'\n\n• '+initials+' •':'');
 
   lastGenerated=result;
-  document.getElementById('output').innerHTML=renderLines(result,initials,oeLine);
+  document.getElementById('output').innerHTML=renderLines(result,initials,oemLine);
 }
 
 function resetOutput(){
   if(!lastGenerated) return;
-  var initials=getInitials(),brand=v('f-brand'),oeLine=brand?'Część jest w 100% oryginalna OE '+brand+'.':'';
-  document.getElementById('output').innerHTML=renderLines(lastGenerated,initials,oeLine);
+  var initials=getInitials(),brand=v('f-brand'),oemLine=brand?'Część jest w 100% oryginalna OE '+brand+'.':'';
+  document.getElementById('output').innerHTML=renderLines(lastGenerated,initials,oemLine);
 }
 
 /* ══════════════════════════════════════
@@ -657,14 +681,8 @@ document.querySelectorAll('input:not(#popup-initials), textarea').forEach(functi
 
 window.addEventListener('DOMContentLoaded', function(){
   addOeRow();
-  var saved = localStorage.getItem('allegro_initials');
-  if (saved) {
-    document.getElementById('popup').classList.add('hidden');
-    document.getElementById('header-badge').textContent = saved;
-  } else {
-    document.getElementById('popup-btn').disabled = true;
-    setTimeout(function(){ document.getElementById('popup-initials').focus(); }, 100);
-  }
+  document.getElementById('popup-btn').disabled = true;
+  setTimeout(function(){ document.getElementById('popup-initials').focus(); }, 100);
   generate();
 });
 </script>
